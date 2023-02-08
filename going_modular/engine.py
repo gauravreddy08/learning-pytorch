@@ -115,8 +115,8 @@ def train(model: nn.Module, epochs: int,
 
     print(f"Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}% | Test Loss: {test_loss:.4f}, Test Acc: {test_acc:.2f}% \n------------")
     results["train_loss"].append(train_loss.cpu())
-    results["train_acc"].append(train_acc.cpu())
+    results["train_acc"].append(train_acc)
     results["test_loss"].append(test_loss.cpu())
-    results["test_acc"].append(test_acc.cpu())
+    results["test_acc"].append(test_acc)
 
   return results
