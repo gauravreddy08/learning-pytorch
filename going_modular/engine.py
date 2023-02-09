@@ -2,6 +2,7 @@ import torch
 from torch import nn
 from typing import Dict, List, Tuple
 from sklearn.metrics import accuracy_score
+import wandb # NEW
 
 def train_step(model: nn.Module,
                dataloader: torch.utils.data.DataLoader,
@@ -118,5 +119,12 @@ def train(model: nn.Module, epochs: int,
     results["train_acc"].append(train_acc)
     results["test_loss"].append(test_loss.cpu())
     results["test_acc"].append(test_acc)
+
+    # NEW
+    wandb.log({"train_loss": train_loss.cpu(),
+                "train_acc": train_acc,
+                "test_loss": test_loss.cpu(),
+                "test_acc": test_acc})
+    # NEW
 
   return results
