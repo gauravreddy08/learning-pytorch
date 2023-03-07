@@ -27,7 +27,7 @@ def train_step(model: nn.Module,
   train_acc = []
   
   model.train()
-  with tqdm(train_dataloader, unit='batch', ascii=' =', position=0, bar_format='{n_fmt}/{total_fmt} [{bar:30}] - {elapsed_s:.0f}s {rate_fmt} {desc} ') as tbatch:
+  with tqdm(dataloader, unit='batch', ascii=' =', position=0, bar_format='{n_fmt}/{total_fmt} [{bar:30}] - {elapsed_s:.0f}s {rate_fmt} {desc} ') as tbatch:
     for X, y in tbatch:
       X, y = X.to(device), y.to(device)
 
