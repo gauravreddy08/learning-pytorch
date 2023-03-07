@@ -34,8 +34,9 @@ def train_step(model: nn.Module,
       preds = model(X)
 
       loss = loss_fn(preds, y)
-      acc = accuracy_score(y.cpu(), torch.argmax(torch.softmax(preds, dim=1), dim=1).cpu())
-      tbatch.set_description_str(f"loss: {torch.mean(torch.Tensor(train_loss)).item():.4f} - accuracy: {torch.mean(torch.Tensor(train_acc)).item():.4f}")
+      acc = accuracy_score(y.detach().cpu(), 
+                           torch.argmax(torch.softmax(preds, dim=1), dim=1).detach().cpu())
+      tbatch.set_description_str(f"loss: {torch.mean(torch.Tensor(train_loss)).detach().cpu():.4f} - accuracy: {torch.mean(torch.Tensor(train_acc)).detach().cpu():.4f}")
 
       train_loss.append(loss)
       train_acc.append(acc)
@@ -43,7 +44,7 @@ def train_step(model: nn.Module,
       optimizer.zero_grad()
       loss.backward()
       optimizer.step()
-  return torch.mean(torch.Tensor(train_loss)).item(), torch.mean(torch.Tensor(train_acc)).item()
+  return torch.mean(torch.Tensor(train_loss)).detach().cpu(), torch.mean(torch.Tensor(train_acc)).detach().cpu()
 
 def test_step(model: nn.Module,
               dataloader: torch.utils.data.DataLoader,
