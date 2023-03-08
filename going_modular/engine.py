@@ -1,7 +1,6 @@
 import torch 
 from torch import nn
 from typing import Dict, List, Tuple
-from sklearn.metrics import accuracy_score
 from tqdm import tqdm
 import wandb # NEW
 
@@ -32,19 +31,21 @@ def train_step(model: nn.Module,
       X, y = X.to(device), y.to(device)
 
       preds = model(X)
+      pred_labels = torch.argmax(torch.softmax(preds, dim=1), dim=1)
 
       loss = loss_fn(preds, y)
-      acc = accuracy_score(y.detach().cpu(), 
-                           torch.argmax(torch.softmax(preds, dim=1), dim=1).detach().cpu())
-      tbatch.set_description_str(f"loss: {torch.mean(torch.Tensor(train_loss)).detach().cpu():.4f} - accuracy: {torch.mean(torch.Tensor(train_acc)).detach().cpu():.4f}")
+      acc = (y == pred_labels).float().sum() / len(y)
 
       train_loss.append(loss)
       train_acc.append(acc)
 
+      tbatch.set_description_str(f"loss: {sum(train_loss)/len(train_loss):.4f} - accuracy: {sum(train_acc)/len(train_acc):.4f}")
+
       optimizer.zero_grad()
       loss.backward()
       optimizer.step()
-  return torch.mean(torch.Tensor(train_loss)).detach().cpu(), torch.mean(torch.Tensor(train_acc)).detach().cpu()
+
+  return sum(train_loss)/len(train_loss), sum(train_acc)/len(train_acc)
 
 def test_step(model: nn.Module,
               dataloader: torch.utils.data.DataLoader,
@@ -72,8 +73,11 @@ def test_step(model: nn.Module,
     for batch, (X, y) in enumerate(dataloader):
       X, y = X.to(device), y.to(device)
       preds = model(X)
+      pred_labels = torch.argmax(torch.softmax(preds, dim=1), dim=1)
+
       test_loss += loss_fn(preds, y)
-      test_acc += accuracy_score(y.cpu(), torch.argmax(torch.softmax(preds, dim=1), dim=1).cpu())
+      test_acc += (y == pred_labels).float().sum() / len(y)
+
     return test_loss/len(dataloader), test_acc/len(dataloader)
 
 def train(model: nn.Module, epochs: int,
@@ -116,14 +120,16 @@ def train(model: nn.Module, epochs: int,
 
   for epoch in range(epochs):
     print(f"Epoch {epoch+1}/{epochs}")
+
     train_loss, train_acc = train_step(model, train_data, loss, optimizer)
-    print("", end='')
     test_loss, test_acc = test_step(model, test_data, loss)
+
     print(f"└───── val_loss: {test_loss:.4f} - val_accuracy: {test_acc:.4f}")
-    results["train_loss"].append(train_loss)
-    results["train_acc"].append(train_acc)
-    results["test_loss"].append(test_loss.cpu())
-    results["test_acc"].append(test_acc)
+
+    results["train_loss"].append(train_loss.detach().cpu())
+    results["train_acc"].append(train_acc.detach().cpu())
+    results["test_loss"].append(test_loss.detach().cpu())
+    results["test_acc"].append(test_acc.detach().cpu())
 
     # NEW
     wandb.log({"train_loss": train_loss,
